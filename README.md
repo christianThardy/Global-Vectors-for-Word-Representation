@@ -7,7 +7,9 @@ An overview of word embeddings and their connection to distributional semantic m
 
 Global Vectors for Word Representation presented by: Richard Socher of Stanford University [<a href="https://youtu.be/ASn7ExxLZws" title="YouTube.com" rel="nofollow">2</a></li>] 
 
-You can find my own detailed explanation in section 7 of this post [<a href="https://www.xtiandata.com/single-post/2018/10/26/Shallow-Deep-Natural-Language-Processing" title="xtiandata.com" rel="nofollow">3</a></li>] 
+Paper Dissected: “Glove: Global Vectors for Word Representation” Explained [<a href="http://mlexplained.com/2018/04/29/paper-dissected-glove-global-vectors-for-word-representation-explained/" title="mlexplained.com" rel="nofollow">3</a></li>]
+
+You can find my own detailed explanation in section 7 of this post [<a href="https://www.xtiandata.com/single-post/2018/10/26/Shallow-Deep-Natural-Language-Processing" title="xtiandata.com" rel="nofollow">4</a></li>] 
 
 
 Reference for the implementation:
