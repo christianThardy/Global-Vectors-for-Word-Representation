@@ -90,7 +90,7 @@ class Glove:
                         X[wi,wj] =+ points
                         X[wj,wi] =+ points
                         
-            # Save the co matrix because training the downstream objectives takes forever
+            # Save the co-oc matrix because training the downstream objectives takes forever
             
             np.save(co_matrix, X)
             
