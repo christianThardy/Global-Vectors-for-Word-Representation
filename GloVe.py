@@ -263,7 +263,7 @@ def main(we_file, w2i_file, use_bt_2000=True, num_files=100):
         CACHE_WORDS = set([
                           'king', 'man', 'queen', 'woman',
                           'italy', 'rome', 'france', 'paris',
-                          'london', 'britain', 'england',
+                          'london', 'britain', 'england'
                          ])
         
         def get_sentences_word2index():
@@ -333,7 +333,7 @@ def main(we_file, w2i_file, use_bt_2000=True, num_files=100):
                               'sad', 'jealous', 'bored', 'confused',
                               'may', 'might', 'should', 
                               'dad', 'guy', 'mom', 'girl', 
-                              'face','head', 'body',
+                              'face','head', 'body'
             ])
             
             sample_sentences, word2index = get_sentences_word2index_limit_vocab(n_vocab=5000, cache_words=cache_words)
