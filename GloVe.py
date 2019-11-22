@@ -1,4 +1,5 @@
 # GloVe word embeddings from scratch
+# Needs refactoring 
 
 '''Reference:
     Jeffrey Pennington, Richard Socher, and Christopher D. Manning. 2014.
