@@ -14,4 +14,4 @@ You can find my own detailed explanation in section 7 of this post [<a href="htt
 
 Reference for the implementation:
 
-Jeffrey Pennington, Richard Socher, and Christopher D. Manning. 2014 [<a href="https://nlp.stanford.edu/pubs/glove.pdf" title="nlp.stanford.edu" rel="nofollow">4</a></li>] 
+Jeffrey Pennington, Richard Socher, and Christopher D. Manning. 2014 [<a href="https://nlp.stanford.edu/pubs/glove.pdf" title="nlp.stanford.edu" rel="nofollow">5</a></li>] 
