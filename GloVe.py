@@ -12,7 +12,7 @@ import sys
 from datetime import datetime
 sys.path.append(os.path.abspath('..'))
 
-# Use 50 documents and over to return accurate analogies
+# Use 50 documents and over to return the most accurate analogies
 
 class Glove:
     def __init__(self, Zi, Qi, context_v):
