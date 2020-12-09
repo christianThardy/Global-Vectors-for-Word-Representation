@@ -1,5 +1,4 @@
-# GloVe
-# Global Vectors for Word Representation
+# Global Vectors for Word Representation aka GloVe
 
 State of the art in 2014 and now regarded as a classic. Here are a couple of my favorite resources on the pre-trained vector method:
 
