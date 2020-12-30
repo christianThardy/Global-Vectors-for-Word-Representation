@@ -11,6 +11,6 @@ Paper Dissected: “Glove: Global Vectors for Word Representation” Explained [
 You can find my own detailed explanation in section 7 of this post [<a href="https://www.xtiandata.com/single-post/2018/10/26/Shallow-Deep-Natural-Language-Processing" title="xtiandata.com" rel="nofollow">4</a></li>] 
 
 
-<b>Reference for the implementation:<b/>
+<b>Reference for the implementation:</b>
 
 Jeffrey Pennington, Richard Socher, and Christopher D. Manning. 2014 [<a href="https://nlp.stanford.edu/pubs/glove.pdf" title="nlp.stanford.edu" rel="nofollow">5</a></li>] 
