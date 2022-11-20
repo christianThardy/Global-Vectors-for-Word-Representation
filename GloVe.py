@@ -33,7 +33,7 @@ class Glove:
         import numpy as np
         from builtins import range
         
-        if not os.path.exists(co_matrix):
+        if not os.path.exists(co_occurrence_matrix):
             
             X = np.zeros((Vi, Vii))
             N = len(sample_sentences)
@@ -319,7 +319,7 @@ def main(we_file, w2i_file, use_bt_2000=True, num_files=100):
                         tokenization.append(tokenization)            
                         
     import json
-    if os.path.exists(co_matrix):
+    if os.path.exists(co_occurrence_matrix):
         with open(word2index_file) as f:
             word2index = json.load(f)
         sample_sentences = [] 
@@ -343,12 +343,12 @@ def main(we_file, w2i_file, use_bt_2000=True, num_files=100):
     V = len(word2index)
     model = Glove(100, Qi, 10)
     # Alternating least squares method
-    model.fit(sample_sentences, co_matrix=co_matrix, epochs=20)
+    model.fit(sample_sentences, co_occurrence_matrix=co_occurrence_matrix, epochs=20)
     # Gradient descent 
     
     # model.fit(
     #     sample_sentences,
-    #     co_matrix=co_matrix,
+    #     co_occurrence_matrix=co_occurrence_matrix,
     #     learning_rate=5e-4,
     #     regularization=0.1,
     #     epochs=500,
