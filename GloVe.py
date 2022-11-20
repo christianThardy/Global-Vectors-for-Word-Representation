@@ -5,8 +5,6 @@
     Jeffrey Pennington, Richard Socher, and Christopher D. Manning. 2014.
     https://nlp.stanford.edu/pubs/glove.pdf'''
 
-# Dependencies
-
 import os
 import sys
 from datetime import datetime
@@ -15,23 +13,22 @@ sys.path.append(os.path.abspath('..'))
 # Use 50 documents and over to return the most accurate analogies
 
 class Glove:
-    def __init__(self, Zi, Qi, context_v):
-        self.Z = Zi
-        self.Q = Qi
-        self.context_v = context_v
-        
+    def __init__(self, embedding_dimension, embedding_vector, context_v):
+        self.embedding_dimension = Z
+        self.embedding_vector = Q
+        self.context_vector = context_vector
         
     # Builds a co-occurrence matrix
     # The paper defines the matrix as X
     
-    def fit(self, sample_sentences, co_matrix=None, 
+    def fit(self, sample_sentences, co_occurrence_matrix=None, 
             learning_rate=1e-4, regularization=0.1, 
             x_max=100, alpha=0.75, epochs=10, 
             gd=False):
         
         t0 = datetime.now()
-        Qi = self.Q
-        Zi = self.Z
+        Q = self.embedding_vector
+        Z = self.embedding_dimension
 
         import numpy as np
         from builtins import range
