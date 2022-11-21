@@ -5,22 +5,27 @@
     Jeffrey Pennington, Richard Socher, and Christopher D. Manning. 2014.
     https://nlp.stanford.edu/pubs/glove.pdf'''
 
+# Stdlib
 import os
 import sys
 from datetime import datetime
 sys.path.append(os.path.abspath('..'))
+from builtins import range
+
+# Third party
+import numpy as np
+
 
 # Use 50 documents and over to return the most accurate analogies
-
 class Glove:
     def __init__(self, embedding_dimension, embedding_vector, context_v):
+
         self.embedding_dimension = Z
         self.embedding_vector = Q
         self.context_vector = context_vector
         
     # Builds a co-occurrence matrix
     # The paper defines the matrix as X
-    
     def fit(self, sample_sentences, co_occurrence_matrix=None, 
             learning_rate=1e-4, regularization=0.1, 
             x_max=100, alpha=0.75, epochs=10, 
@@ -30,8 +35,6 @@ class Glove:
         Q = self.embedding_vector
         Z = self.embedding_dimension
 
-        import numpy as np
-        from builtins import range
         
         if not os.path.exists(co_occurrence_matrix):
             
@@ -51,7 +54,6 @@ class Glove:
                 
                 
                 # i and j point to the current element in the sequence of sample_sentence
-                
                 for i in range(n):
                     
                     wi = sample_sentence[i]
