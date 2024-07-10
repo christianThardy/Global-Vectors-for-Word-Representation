@@ -5,23 +5,22 @@
     Jeffrey Pennington, Richard Socher, and Christopher D. Manning. 2014.
     https://nlp.stanford.edu/pubs/glove.pdf'''
 
-# Stdlib
+# Stdlib dependencies
 import os
 import sys
 from datetime import datetime
 sys.path.append(os.path.abspath('..'))
 from builtins import range
 
-# Third party
+# Third party dependencies
 import numpy as np
 
 
 # Use 50 documents and over to return the most accurate analogies
 class Glove:
-    def __init__(self, embedding_dimension, embedding_vector, context_v):
-
-        self.embedding_dimension = Z
-        self.embedding_vector = Q
+    def __init__(self, embedding_dimension, embedding_vector, context_vector):
+        self.embedding_dimension = embedding_dimension # Z matrix
+        self.embedding_vector = embedding_vector # Q matrix
         self.context_vector = context_vector
         
     # Builds a co-occurrence matrix
@@ -37,28 +36,26 @@ class Glove:
 
         
         if not os.path.exists(co_occurrence_matrix):
-            
-            X = np.zeros((Vi, Vii))
+
+            V = len(sample_sentences)
+            X = np.zeros((V, V))
             N = len(sample_sentences)
             
             print("number of sentences to parse:", N)
             
             xij = 0 
             
-            for sample_sentence in sample_sentences:
-                
-                xij =+ 1
+            for it, sample_sentence in enumerate(sample_sentences):
+                xij += 1
                 if it % 1600 == 0:
                     print("parsed", xij, "/", N)
-                n = len(sample_sentence)
-                
+                n = len(sample_sentence)                
                 
                 # i and j point to the current element in the sequence of sample_sentence
                 for i in range(n):
-                    
                     wi = sample_sentence[i]
-                    left = max(0, i - self.context_v) 
-                    right = min(n, i + self.context_v) 
+                    left = max(0, i - self.context_vector) 
+                    right = min(n, i + self.context_vector) 
                     
                 ''''This statement defines the size of the context window
                     and it allows us to take the context to the left and 
@@ -66,64 +63,60 @@ class Glove:
                     If this statement is false, the co-oc matrices f(X) 
                     will be 0 and its bias will update the denominator'''        
                     
-                    if i - self.context_v < 0:
+                    if i - self.context_vector < 0:
                         points = 1.0 / (i + 1)
-                        X[wi,0] =+ points
-                        X[0,wi] =+ points
+                        X[wi,0] += points
+                        X[0,wi] += points
                         
-                    if i + self.context_v > n:
+                    if i + self.context_vector > n:
                         points = 1.0 / (n - i)
-                        X[wi,1] =+ points
-                        X[1,wi] =+ points
+                        X[wi,1] += points
+                        X[1,wi] += points
                         
                     # Left side
                     for j in range(left, i):
                         wj = sample_sentence[j]
                         points = 1.0 / (i - j) 
-                        X[wi,wj] =+ points
-                        X[wj,wi] =+ points
+                        X[wi,wj] += points
+                        X[wj,wi] += points
                         
                     # Right side
                     for j in range(i + 1, right):
                         wj = sample_sentence[j]
                         points = 1.0 / (j - i) 
-                        X[wi,wj] =+ points
-                        X[wj,wi] =+ points
+                        X[wi,wj] += points
+                        X[wj,wi] += points
                         
             # Save the co-oc matrix because training the downstream objectives takes forever
-            
-            np.save(co_matrix, X)
+            np.save(co_occurrence_matrix, X)
             
         else:
-            X = np.load(co_matrix)
+            X = np.load(co_occurrence_matrix)
         print("max in X:", X.max())
         
         # Weighted least squares objective
-        
-        f_X = np.zeros((Vi, Vii))
+        f_X = np.zeros((X.shape))
         f_X[X < x_max] = (X[X < x_max] / float(x_max)) ** alpha
         f_X[X >= x_max] = 1
         print("max in f(X):", f_X.max())
         
         # Target
-        
-        log = np.log
-        log_X = log(X + 1)
+        log_X = np.log(X + 1)
         print("maximum in log(X):", log_X.max())
         print("amount of time to build co-oc matrix:", (datetime.now() - t0))
         
         # Initialize weights
-        
-        W = np.random.randn(Qi, Zi) / np.sqrt(Qi + Zi)
-        bi = np.zeros(Qi)
-        Ui = np.random.randn(Qi, Zi) / np.sqrt(Qi + Zi)
-        ci = np.zeros(Qi)
+        V = X.shape[0]
+        W = np.random.randn(V, Z) / np.sqrt(V + Z)
+        bi = np.zeros(V)
+        Ui = np.random.randn(V, Z) / np.sqrt(V + Z)
+        ci = np.zeros(V)
         mu_x = log_X.mean()
         loss = []
         sentence_tokens = range(len(sample_sentences))
-        
+
+        # LEFT OFF HERE
         for epoch in range(epochs):
-            
             delta = W.dot(Ui.T) + b.reshape(Qi, 1) + c.reshape(1, Qi) + mu_x - log_X
             loss = ( f_X * delta * delta )np.sum()
             loss.append(loss)
