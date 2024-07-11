@@ -14,6 +14,7 @@ from builtins import range
 
 # Third party dependencies
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 # Use 50 documents and over to return the most accurate analogies
@@ -28,7 +29,7 @@ class Glove:
     def fit(self, sample_sentences, co_occurrence_matrix=None, 
             learning_rate=1e-4, regularization=0.1, 
             x_max=100, alpha=0.75, epochs=10, 
-            gd=False):
+            gradient_descent=False):
         
         t0 = datetime.now()
         Q = self.embedding_vector
@@ -115,75 +116,72 @@ class Glove:
         loss = []
         sentence_tokens = range(len(sample_sentences))
 
-        # LEFT OFF HERE
         for epoch in range(epochs):
-            delta = W.dot(Ui.T) + b.reshape(Qi, 1) + c.reshape(1, Qi) + mu_x - log_X
-            loss = ( f_X * delta * delta )np.sum()
-            loss.append(loss)
-            print("epoch:", epoch, "loss:", loss)
+            delta = W.dot(Ui.T) + bi.reshape(V, 1) + ci.reshape(1, V) + mu_x - log_X
+            epoch_loss = ( f_X * delta * delta ).sum()
+            loss.append(epoch_loss)
+            print("epoch:", epoch, "loss:", epoch_loss)
             
             # Gradient descent
             # Updates W
-                # alpha = learning rate             
-            
-            if gd:
-                for i in range(Qi):
-                    W[i] -= alpha*(f_X[i,:]*delta[i,:]).dot(Ui)
-                W -= alpha*regularization*W
+            # alpha = learning_rate             
+            if gradient_descent:
+                for i in range(V):
+                    W[i] -= learning_rate * (f_X[i,:] * delta[i,:]).dot(Ui)
+                W -= learning_rate * regularization * W
                 
                 # Updates bi
-                for i in range(Qi):
-                    bi[i] -= alpha*f_X[i,:].dot(delta[i,:])
+                for i in range(V):
+                    bi[i] -= learning_rate * f_X[i,:].dot(delta[i,:])
                 
                 # Updates Ui
-                for j in range(Qi):
-                    Ui[j] -= alpha*(f_X[:,j]*delta[:,j]).dot(W)
-                Ui -= learning_rate*regularization*Ui
+                for j in range(V):
+                    Ui[j] -= learning_rate * (f_X[:,j] * delta[:,j]).dot(W)
+                Ui -= learning_rate * regularization * Ui
                 
                 # Updates ci
-                for j in range(Qi):
-                    ci[j] -= alpha*f_X[:,j].dot(delta[:,j])
+                for j in range(V):
+                    ci[j] -= learning_rate * f_X[:,j].dot(delta[:,j])
             else:
-
                 # Updates W
-                for i in range(Zi):
-                    matrix = regularization*np.eye(Zi) + (f_X[i,:]*Ui.T).dot(Ui)
-                    vector_quant = (f_X[i,:]*(log_X[i,:] - bi[i] - ci - mu_x)).dot(Ui)
+                for i in range(V):
+                    matrix = regularization * np.eye(Z) + (f_X[i,:] * Ui.T).dot(Ui)
+                    vector_quant = (f_X[i,:] * (log_X[i,:] - bi[i] - ci - mu_x)).dot(Ui)
                     W[i] = np.linalg.solve(matrix, vector_quant)
                 
                 # Updates bi
-                for i in range(Qi):
-                    bi_denominator = f_X[i,:]np.sum() + regularization
+                for i in range(V):
+                    bi_denominator = f_X[i,:].sum() + regularization
                     bi_numerator = f_X[i,:].dot(log_X[i,:] - W[i].dot(Ui.T) - ci - mu_x)
                     bi[i] = bi_numerator / bi_denominator
                 
                 # Updates Ui
-                for j in range(Qi):
-                    matrix = regularization*np.eye(Zi) + (f_X[:,j]*W.T).dot(W)
-                    vector_quant = (f_X[:,j]*(log_X[:,j] - bi - ci[j] - mu_x)).dot(W)
+                for j in range(V):
+                    matrix = regularization * np.eye(Z) + (f_X[:,j] * W.T).dot(W)
+                    vector_quant = (f_X[:,j] * (log_X[:,j] - bi - ci[j] - mu_x)).dot(W)
                     Ui[j] = np.linalg.solve(matrix, vector_quant)
                 
                 # Updates ci
-                for j in range(Zi):
-                    ci_denominator = f_X[:,j]np.sum() + regularization
+                for j in range(V):
+                    ci_denominator = f_X[:,j].sum() + regularization
                     ci_numerator = f_X[:,j].dot(log_X[:,j] - W.dot(Ui[j]) - bi  - mu_x)
                     ci[j] = ci_numerator / ci_denominator
 
         self.W = W
         self.Ui = Ui
-        import matplotlib.pyplot as plt
-        plt.plot(costs)
+        plt.plot(LOSS)
         plt.show()
         
-    # Function word_analogies expects a (Qi,Zi) matrx and a (Zi,Qi) matrix
-    
-    def save(self, Nn):
-    
+    # Function word_analogies expects a (V,Z) matrx and a (Z,V) matrix
+    def save(self, filename):
         arrays = [self.W, self.Ui.T]
-        np.savez(Nn, *arrays)
-        
+        np.savez(filename, *arrays)
+
+# LEFT OFF HERE
+# LEFT OFF HERE
+# LEFT OFF HERE
+# LEFT OFF HERE
 # Retrieves data in a callable function     
-        
 def get_bt_2000_data(num_files, num_vocab, by_paragraph=False):
     
     prefix = os.path.abspath('bt_2000_data')    
