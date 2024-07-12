@@ -17,174 +17,240 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# Use 50 documents and over to return the most accurate analogies
 class Glove:
-    def __init__(self, embedding_dimension, embedding_vector, context_vector):
-        self.embedding_dimension = embedding_dimension # Z matrix
-        self.embedding_vector = embedding_vector # Q matrix
-        self.context_vector = context_vector
+    """
+    This class implements the GloVe algorithm for learning word embeddings from a corpus of text. 
+    The model builds a co-occurrence matrix that captures how frequently words co-occur with each 
+    other in a context window. It then uses this matrix to train word and context vectors such that 
+    their dot product approximates the logarithm of the word co-occurrence probabilities to produce
+    word analogies.
+
+    Attributes:
+        embedding_dimension (int): Dimensionality of the embedding vectors.
+        vocabulary_size (int): Size of the vocabulary.
+        context_window_size (int): Size of the context window around each word.
+
+    Methods:
+        fit():
+            Builds the co-occurrence matrix from the sample sentences and trains the GloVe model 
+            using either gradient descent or alternating least squares.
         
-    # Builds a co-occurrence matrix
-    # The paper defines the matrix as X
-    def fit(self, sample_sentences, co_occurrence_matrix=None, 
+        save(filename):
+            Saves the trained word and context vectors to a file in .npz format.
+    """
+    def __init__(self, embedding_dimension, vocabulary_size, context_window_size):
+        # Dimensionality of embedding vectors, Z matrix from the paper
+        self.embedding_dimension = embedding_dimension
+        
+        # Size of the vocabulary, matrix Q from the paper
+        self.vocabulary_size = vocabulary_size
+        
+        # Size of the context window
+        self.context_window_size = context_window_size
+
+    
+    # Builds a co-occurrence matrix, X matrix from the paper
+    def fit(self, sample_sentences, co_occurrence_matrix_file=None, 
             learning_rate=1e-4, regularization=0.1, 
             x_max=100, alpha=0.75, epochs=10, 
             gradient_descent=False):
-        
-        t0 = datetime.now()
-        Q = self.embedding_vector
-        Z = self.embedding_dimension
 
-        
-        if not os.path.exists(co_occurrence_matrix):
+        # Record start time for performance measurement
+        start_time = datetime.now()
+        # Embedding dimensionality
+        embedding_dim = self.embedding_dimension
+        # Vocabulary size
+        vocab_size = self.vocabulary_size
 
-            V = len(sample_sentences)
-            X = np.zeros((V, V))
-            N = len(sample_sentences)
+        # Check if the co-occurrence matrix file exists
+        if not os.path.exists(co_occurrence_matrix_file):
+            # Initialize the co-occurrence matrix
+            co_occurence_matrix = np.zeros((vocab_size, vocab_size))
+            # Number of sentences
+            num_sentences = len(sample_sentences)
             
-            print("number of sentences to parse:", N)
-            
-            xij = 0 
-            
-            for it, sample_sentence in enumerate(sample_sentences):
-                xij += 1
-                if it % 1600 == 0:
-                    print("parsed", xij, "/", N)
-                n = len(sample_sentence)                
+            print("number of sentences to parse:", num_sentences)
+
+            # Iterate over sentences
+            for sentence_idx, sample_sentence in enumerate(sample_sentences):
+                # Print progress every 1600 sentences
+                if sentence_idx % 1600 == 0:
+                    print("parsed", sentence_idx, "/", num_sentences)
+                sentence_length = len(sample_sentence)                
                 
-                # i and j point to the current element in the sequence of sample_sentence
-                for i in range(n):
-                    wi = sample_sentence[i]
-                    left = max(0, i - self.context_vector) 
-                    right = min(n, i + self.context_vector) 
+                # Iterate over the words in the sentence
+                for i in range(sentence_length):
+                    # Current word
+                    word_i = sample_sentence[i]
+                    # Left context window
+                    left_context = max(0, i - self.context_window_size)
+                    # Right context window
+                    right_context = min(sentence_length, i + self.context_window_size) 
                     
-                ''''This statement defines the size of the context window
+                ''''Defines the size of the context window
                     and it allows us to take the context to the left and 
                     right of a sentence via the "left" and "right" tokens. 
                     If this statement is false, the co-oc matrices f(X) 
-                    will be 0 and its bias will update the denominator'''        
-                    
-                    if i - self.context_vector < 0:
+                    will be 0 and its bias will update the denominator''' 
+                    # Handle left boundary
+                    if i - self.context_window_size < 0:
+                        # Points for the boundary condition
                         points = 1.0 / (i + 1)
-                        X[wi,0] += points
-                        X[0,wi] += points
-                        
-                    if i + self.context_vector > n:
-                        points = 1.0 / (n - i)
-                        X[wi,1] += points
-                        X[1,wi] += points
+                        # Update co-occurance matrix
+                        co_occurrence_matrix[word_i, 0] += points
+                        # Update co-occurance matrix
+                        co_occurrence_matrix[0, word_i] += points
+
+                    # Handle right boundary
+                    if i + self.context_window_size > sentence_length:
+                        points = 1.0 / (sentence_length - i)
+                        co_occurrence_matrix[word_i,1] += points
+                        co_occurrence_matrix[1,word_i] += points
                         
                     # Left side
-                    for j in range(left, i):
-                        wj = sample_sentence[j]
+                    # Iterate over the left context
+                    for j in range(left_context, i):
+                        # Current context word
+                        word_j = sample_sentence[j]
+                        # Points for the co-occurrence
                         points = 1.0 / (i - j) 
-                        X[wi,wj] += points
-                        X[wj,wi] += points
+                        co_occurrence_matrix[word_i, word_j] += points
+                        co_occurrence_matrix[word_j, word_i] += points
                         
                     # Right side
-                    for j in range(i + 1, right):
-                        wj = sample_sentence[j]
+                    for j in range(i + 1, right_context):
+                        word_j = sample_sentence[j]
                         points = 1.0 / (j - i) 
-                        X[wi,wj] += points
-                        X[wj,wi] += points
+                        co_occurrence_matrix[word_i, word_j] += points
+                        co_occurrence_matrix[word_j, word_i] += points
                         
-            # Save the co-oc matrix because training the downstream objectives takes forever
+            # Save the co-oc matrix
             np.save(co_occurrence_matrix, X)
             
         else:
-            X = np.load(co_occurrence_matrix)
-        print("max in X:", X.max())
+            # Load the co-occurrence matrix
+            co_occurrence_matrix = np.load(co_occurrence_matrix)
+        # Print the minimum value in the co-occurrence matrix
+        print("max in co_occurrence_matrix:", co_occurrence_matrix.max())
         
         # Weighted least squares objective
-        f_X = np.zeros((X.shape))
-        f_X[X < x_max] = (X[X < x_max] / float(x_max)) ** alpha
-        f_X[X >= x_max] = 1
-        print("max in f(X):", f_X.max())
+        # Initialize the weighting function
+        weighting_function = np.zeros(co_occurrence_matrix.shape)
+        # Apply the weighting function
+        weighting_function[co_occurrence_matrix < x_max] = (co_occurrence_matrix[co_occurrence_matrix < x_max] / float(x_max)) ** alpha
+        weighting_function[co_occurrence_matrix >= x_max] = 1
+        # Pring maximum value in the weighting function
+        print("Max in weighting_function:", weighting_function.max())
         
         # Target
-        log_X = np.log(X + 1)
-        print("maximum in log(X):", log_X.max())
-        print("amount of time to build co-oc matrix:", (datetime.now() - t0))
+        # Compute the log of the co-occurrence matrix 
+        log_co_occurrence_matrix = np.log(co_occurrence_matrix + 1)
+        # Print the maximum value in the log co-occurrence matrix 
+        print("Maximum in log(co_occurrence_matrix):", log_co_occurrence_matrix.max())
+        # Print the time taken to build the co-occurrence matrix
+        print("Amount of time to build co-occurence matrix:", (datetime.now() - start_time))
         
         # Initialize weights
-        V = X.shape[0]
-        W = np.random.randn(V, Z) / np.sqrt(V + Z)
-        bi = np.zeros(V)
-        Ui = np.random.randn(V, Z) / np.sqrt(V + Z)
-        ci = np.zeros(V)
-        mu_x = log_X.mean()
-        loss = []
-        sentence_tokens = range(len(sample_sentences))
+        # Initialize word vectors
+        W_word_vectors = np.random.randn(vocab_size, embedding_dim) / np.sqrt(vocab_size + embedding_dim)
+        # Initialize word biases
+        b_word_biases = np.zeros(vocab_size)
+        # Initialize context vectors
+        U_context_vectors = np.random.randn(vocab_size, embedding_dim) / np.sqrt(vocab_size + embedding_dim)
+        # Initialize context biases
+        c_context_biases = np.zeros(vocab_size)
+        # Mean of the log co-occurrence matrix
+        mu_log_co_occurrence = log_co_occurrence_matrix.mean()
+        # Store the training loss
+        training_loss = []
 
+        # Iterate over epochs
         for epoch in range(epochs):
-            delta = W.dot(Ui.T) + bi.reshape(V, 1) + ci.reshape(1, V) + mu_x - log_X
-            epoch_loss = ( f_X * delta * delta ).sum()
-            loss.append(epoch_loss)
+            delta = W_word_vectors.dot(U_context_vectors.T) + b_word_biases.reshape(vocab_size, 1) + c_context_biases.reshape(1, vocab_size) + mu_log_co_occurrence - log_co_occurrence_matrix
+            # Compute loss for the epoch
+            epoch_loss = (weighting_function * delta * delta ).sum()
+            # Append each loss to the list
+            training_loss.append(epoch_loss)
             print("epoch:", epoch, "loss:", epoch_loss)
             
-            # Gradient descent
-            # Updates W
-            # alpha = learning_rate             
+            # Gradient descent             
             if gradient_descent:
+                # Iterate over vocabulary size
+                for i in range(vocab_size):
+                    # Update word vectors using gradient descent
+                    W_word_vectors[i] -= learning_rate * (weighting_function[i, :] * delta[i,:]).dot(U_context_vectors)
+                # Regularization
+                W_word_vectors -= learning_rate * regularization * W_word_vectors
+                
                 for i in range(V):
-                    W[i] -= learning_rate * (f_X[i,:] * delta[i,:]).dot(Ui)
-                W -= learning_rate * regularization * W
+                    # Update word biases using gradient descent
+                    b_word_biases[i] -= learning_rate * weighting_function[i, :].dot(delta[i,:])
                 
-                # Updates bi
-                for i in range(V):
-                    bi[i] -= learning_rate * f_X[i,:].dot(delta[i,:])
-                
-                # Updates Ui
+                # Update context vectors using gradient descent & regularization
                 for j in range(V):
-                    Ui[j] -= learning_rate * (f_X[:,j] * delta[:,j]).dot(W)
-                Ui -= learning_rate * regularization * Ui
+                    U_context_vectors[j] -= learning_rate * (weighting_function[:, j] * delta[:, j]).dot(W)
+                U_context_vectors -= learning_rate * regularization * U_context_vectors
                 
-                # Updates ci
+                # # Update context biases using gradient descent
                 for j in range(V):
-                    ci[j] -= learning_rate * f_X[:,j].dot(delta[:,j])
+                    c_context_biases[j] -= learning_rate * weighting_function[:, j].dot(delta[:, j])
             else:
-                # Updates W
+                # Alternating least squares
                 for i in range(V):
-                    matrix = regularization * np.eye(Z) + (f_X[i,:] * Ui.T).dot(Ui)
-                    vector_quant = (f_X[i,:] * (log_X[i,:] - bi[i] - ci - mu_x)).dot(Ui)
-                    W[i] = np.linalg.solve(matrix, vector_quant)
+                    # Compute matrix for ALS
+                    matrix = regularization * np.eye(embedding_dim) + (weighting_function[i, :] * U_context_vectors.T).dot(U_context_vectors)
+                    # Compute vector for ALS
+                    vector_quant = (weighting_function[i, :] * (log_co_occurrence_matrix[i, :] - b_word_biases[i] - c_context_biases  - mu_log_co_occurrence)).dot(U_context_vectors)
+                    # Solve for word vectors
+                    W_word_vectors[i] = np.linalg.solve(matrix, vector_quant)
                 
-                # Updates bi
-                for i in range(V):
-                    bi_denominator = f_X[i,:].sum() + regularization
-                    bi_numerator = f_X[i,:].dot(log_X[i,:] - W[i].dot(Ui.T) - ci - mu_x)
-                    bi[i] = bi_numerator / bi_denominator
-                
-                # Updates Ui
-                for j in range(V):
-                    matrix = regularization * np.eye(Z) + (f_X[:,j] * W.T).dot(W)
-                    vector_quant = (f_X[:,j] * (log_X[:,j] - bi - ci[j] - mu_x)).dot(W)
-                    Ui[j] = np.linalg.solve(matrix, vector_quant)
-                
-                # Updates ci
-                for j in range(V):
-                    ci_denominator = f_X[:,j].sum() + regularization
-                    ci_numerator = f_X[:,j].dot(log_X[:,j] - W.dot(Ui[j]) - bi  - mu_x)
-                    ci[j] = ci_numerator / ci_denominator
+                # Updates word biases
+                for i in range(vocab_size):
+                    # Compute denominator for word biases
+                    bi_denominator = weighting_function[i, :].sum() + regularization
+                    # Compute numerator for word biases
+                    bi_numerator = weighting_function[i, :].dot(log_co_occurrence_matrix[i, :] - W_word_vectors[i].dot(U_context_vectors.T) - c_context_biases - mu_log_co_occurrence)
+                    # Update word biases
+                    b_word_biases[i] = bi_numerator / bi_denominator
 
-        self.W = W
-        self.Ui = Ui
-        plt.plot(LOSS)
+                # Updates context vectors
+                for j in range(vocab_size):
+                    # Compute matrix for ALS
+                    matrix = regularization * np.eye(embedding_dim) + (weighting_function[:, j] * W_word_vectors.T).dot(W_word_vectors)
+                    # Compute vector for ALS
+                    vector_quant = (weighting_function[:, j] * (log_co_occurrence_matrix[:, j] - b_word_biases  - c_context_biases[j] - mu_log_co_occurrence)).dot(W_word_vectors)
+                    # Solve for context vectors
+                    U_context_vectors[j] = np.linalg.solve(matrix, vector_quant)
+                
+                # Updates context biases
+                for j in range(V):
+                    # Compute denominator for context biases
+                    ci_denominator = weighting_function[:, j].sum() + regularization
+                    # Compute numerator for context biases
+                    ci_numerator = weighting_function[:, j].dot(log_co_occurrence_matrix[:, j] - W_word_vectors.dot(U_context_vectors[j]) - b_word_biases   - mu_log_co_occurrence)
+                    # Update context biases
+                    c_context_biases[j] = ci_numerator / ci_denominator
+
+        # Store the learned word vectors
+        self.W_word_vectors = W_word_vectors
+        # Store the learned context vectors
+        self.U_context_vectors  = U_context_vectors 
+        # Plot training loss
+        plt.plot(training_loss)
         plt.show()
-        
-    # Function word_analogies expects a (V,Z) matrx and a (Z,V) matrix
+
+    
+    # Save the learned embeddings
     def save(self, filename):
-        arrays = [self.W, self.Ui.T]
+        arrays = [self.W_word_vectors, self.U_context_vectors.T]
         np.savez(filename, *arrays)
 
-# LEFT OFF HERE
-# LEFT OFF HERE
-# LEFT OFF HERE
-# LEFT OFF HERE
-# Retrieves data in a callable function     
+
+# Retrieves data from bt-2000 dataset     
 def get_bt_2000_data(num_files, num_vocab, by_paragraph=False):
-    
+    # Path to data folder
     prefix = os.path.abspath('bt_2000_data')    
+    # Check if folder exists
     if not os.path.exists(prefix):
         print('Data not found in the correct folder')
         print('Data should be in folder: bt_2000_data, adjacent to the class folder, but it does not exist.')
@@ -194,56 +260,68 @@ def get_bt_2000_data(num_files, num_vocab, by_paragraph=False):
     
     # Calls the data from the prefix variable's directory
     input_files = [f for f in os.listdir(prefix) if f.startswith('bt') and f.endswith('txt')]
+    # Check if there are no data files
     if len(input_files) == 0:
         print('Cannot find target data files. Are they in the wrong location?')
         print('Contact the author for the original data: https://xtiandata.com/')
         print('Quitting...')
         exit()  
-        
-    # Return variables
+
+    
+    # List to store sample sentences
     sample_sentences = []
+    # Dictionary to map words to indices
     word2index = {'LEFT': 0, 'RIGHT': 1}
+    # List to map indices to words
     index2word = ['LEFT', 'RIGHT']
+    # Current index for new words
     current_index = 2
+    # Dictionary to count word occurrences
     word_index_count = {0: float('inf'), 1: float('inf')}
+    
     if num_files is not None:
-        
+        # Limit the number of files to read
         input_files = input_files[:num_files]
+        
     for f in input_files:
-        
+        # Print the current file being read
         print('reading:', f)
-        
-        for line in open(prefix + f): 
-            
+        for line in open(os.path.join(prefix + f)): 
             line = line.strip()
-            
             # Don't count headers, structured data, lists, etc...
             if line and line[0] not in ('[', '*', '-', '|', '=', '{', '}'):
+                # Check if paragraph is True
                 if by_paragraph:
-                    
-                    sentence = [line]
-                    
+                    # Treat the whole line as a sentence
+                    sentences = [line]
                 else:
-                    sentence = line.split('. ')
-                    
-                for sentence in sentence:
-                    
-                    tokens = tokenizer(sentence)
-                    
+                    sentences = line.split('. ')
+                for sentence in sentences:
+                    tokens = sentence.split()
                     for t in tokens:
-                        
+                        # Check if the token is not in the dictionary
                         if t not in word2index:
-                            
+                            # Add the token to the dictionary
                             word2index[t] = current_index
+                            # Add token to the list
                             index2word.append(t)
+                            # Increment the current index
                             current_index =+ 1
+                        # Get the index of the token
                         index = word2index[t]
+                        # Increment the word count
                         word_index_count[index] = word_index_count.get(index, 0) + 1
-                        
+                    # Convert tokens to indices
                     sentence_by_index = [word2index[t] for t in tokens]
-                    sample_sentences.append(sentence_by_index)  
+                    # Add sentence to the list
+                    sample_sentences.append(sentence_by_index)
+    # Return sample sentences and word2index
+    return sample_sentences, word2index
         
-        
+# LEFT OFF HERE
+# LEFT OFF HERE
+# LEFT OFF HERE
+# LEFT OFF HERE
 # Retrieves sentences from the data and fits them to the log-bilinear model        
 def main(we_file, w2i_file, use_bt_2000=True, num_files=100):
     if use_bt_2000:
