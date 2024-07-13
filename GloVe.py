@@ -317,24 +317,27 @@ def get_bt_2000_data(num_files, num_vocab, by_paragraph=False):
                     sample_sentences.append(sentence_by_index)
     # Return sample sentences and word2index
     return sample_sentences, word2index
-        
-# LEFT OFF HERE
-# LEFT OFF HERE
-# LEFT OFF HERE
-# LEFT OFF HERE
-# Retrieves sentences from the data and fits them to the log-bilinear model        
+
+
+# Main function. Retrieves sentences from the data and fits them to the model        
 def main(we_file, w2i_file, use_bt_2000=True, num_files=100):
     if use_bt_2000:
-        co_matrix = 'co_matrix_bt_2000.npy'
+        # Co-occurrence matrix file for bt-2000 dataset
+        co_occurrence_matrix_file = 'co_matrix_bt_2000.npy'
     else:
-        co_matrix = 'co_matrix_%s.npy' % num_files
+        # Co-occurrence matrix file for other datasets
+        co_occurrence_matrix_file = 'co_matrix_%s.npy' % num_files
         
-        CACHE_WORDS = set([
-                          'king', 'man', 'queen', 'woman',
-                          'italy', 'rome', 'france', 'paris',
-                          'london', 'britain', 'england'
-                         ])
-        
+        # Cache words for limited vocabulary
+        CACHE_WORDS = {
+            'king', 'man', 'queen', 'woman',
+            'italy', 'rome', 'france', 'paris',
+            'london', 'britain', 'england'
+        }
+
+        # LEFT OFF HERE
+        # LEFT OFF HERE
+        # LEFT OFF HERE
         def get_sentences_word2index():
             sample_sentences = get_sentences()
             indexed_sample_sentences = []
