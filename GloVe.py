@@ -52,9 +52,13 @@ class Glove:
 
     
     # Builds a co-occurrence matrix, X matrix from the paper
-    def fit(self, sample_sentences, co_occurrence_matrix_file=None, 
-            learning_rate=1e-4, regularization=0.1, 
-            x_max=100, alpha=0.75, epochs=10, 
+    def fit(self, sample_sentences, 
+            co_occurrence_matrix_file=None, 
+            learning_rate=1e-4, 
+            regularization=0.1, 
+            x_max=100, 
+            alpha=0.75, 
+            epochs=10, 
             gradient_descent=False):
 
         # Record start time for performance measurement
