@@ -7,10 +7,12 @@
 
 # Stdlib dependencies
 import os
-import sys
+import json
 from datetime import datetime
-sys.path.append(os.path.abspath('..'))
 from builtins import range
+
+import sys
+sys.path.append(os.path.abspath('..'))
 
 # Third party dependencies
 import numpy as np
@@ -335,103 +337,89 @@ def main(we_file, w2i_file, use_bt_2000=True, num_files=100):
             'london', 'britain', 'england'
         }
 
-        # LEFT OFF HERE
-        # LEFT OFF HERE
-        # LEFT OFF HERE
+        
         def get_sentences_word2index():
-            sample_sentences = get_sentences()
-            indexed_sample_sentences = []
-            i = 2
-            word2index = {'LEFT': 0, 'RIGHT': 1}
-            
-            for sentence in sample_sentences:
-                tokenization = []
-                for sample_token in sentence:
-                    sample_token = token.lower()
-                    if sample_token not in word2index:
-                        word2index[sample_token] = i
-                        i =+ 1
-                        
-                        tokenization.append(word2index[sample_token])                         
-                        
-                        tokenized_sample_sentences.append(tokenization)
-                        
-                        print("Lexicon size:", i)
-                        
-                        return tokenized_sample_sentences, word2index
+            # Get sample sentences and word2index
+            sample_sentences, word2index = get_bt_2000_data(num_files, num_vocab=2000)
+            return tokenized_sample_sentences, word2index
                     
                     
-        # Checks if we need to re-load the raw data
-        # This function is needed to train the co-oc matrix
+        '''Checks if we need to re-load the raw data
+            needed to train the co-oc matrix. Function 
+            gets sentences with limited vocabulary'''
         def get_sentences_word2index_limit_vocab(n_vocab=2000, cache_words=CACHE_WORDS):
-            
-            sample_sentences = get_sentences()
+            sample_sentences, word2index = get_bt_2000_data(num_files, n_vocab=2000)
+            # List to store tokenized sentences
             tokenized_sample_sentences = []
-            
-            i = 2
-            word2index = {'LEFT': 0, 'RIGHT': 1}
-            index2word = ['LEFT', 'RIGHT']
-            
-            word_index_count = {
-                0: float('inf'),
-                1: float('inf'),
-            }
-            
+            # Current index for new words
+            current_index = len(word2index)
+            # Iterate over sample sentences
             for sentence in sample_sentences:
+                # List to store tokenized sentence
                 tokenization = []
-                for sample_token in sentence:
-                    sample_token = token.lower()
-                    if sample_token not in word2index:
-                        index2word.append(sample_token)
-                        word2index[token] = i
-                        i =+ 1
-                        
-                        # Tracks co-oc counts for sorting
-                        index = word2index[sample_token]
-                        word_index_count[index] = word_index_count.get(index, 0) + 1
-                        tokenization.append(index)
-                        tokenization.append(tokenization)            
-                        
-    import json
-    if os.path.exists(co_occurrence_matrix):
+                for token in sentence:
+                    token = token.lower()
+                    # Check if the token is not in the dictionary
+                    if token not in word2index:
+                        # Add token to the dictionary
+                        word2index[token] = current_index
+                        # Increment the current index
+                        current_index += 1 
+                    # Get the index of the token
+                    index = word2index[token]
+                    # Add the index to the tokenization
+                    tokenization.append(index)
+                # Add teh tokenized sentence to the list
+                tokenized_sample_sentences.append(tokenization)
+            return tokenized_sample_sentences, word2index
+            
+
+    # Check if the co-occurrence matrix file exists
+    if os.path.exists(co_occurrence_matrix_file):
         with open(word2index_file) as f:
             word2index = json.load(f)
         sample_sentences = [] 
     else:
+        # Check if bt-2000 dataset is to be used
         if use_bt_2000:
-            cache_words = set([
-                              'frank', 'ocean', 'africa','usa', 
-                              'horrible', 'painful', 'miserable', 'awful',
-                              'sad', 'jealous', 'bored', 'confused',
-                              'may', 'might', 'should', 
-                              'dad', 'guy', 'mom', 'girl', 
-                              'face','head', 'body'
-            ])
-            
+            # Cache words for limited vocabulary
+            cache_words = {
+                'frank', 'ocean', 'africa','usa', 
+                'horrible', 'painful', 'miserable', 'awful',
+                'sad', 'jealous', 'bored', 'confused',
+                'may', 'might', 'should', 
+                'dad', 'guy', 'mom', 'girl', 
+                'face','head', 'body'
+            }
+            # Get sample sentences and word2index
             sample_sentences, word2index = get_sentences_word2index_limit_vocab(n_vocab=5000, cache_words=cache_words)
         else:
             sample_sentences, word2index = get_bt_2000_data(num_files=num_files, n_vocab=2000)
-        
+
+        # Open word2index file for writing
         with open(word2index_file, 'w') as f:
             json.dump(word2index, f)
+
+    # Vocabulary size
     V = len(word2index)
-    model = Glove(100, Qi, 10)
-    # Alternating least squares method
-    model.fit(sample_sentences, co_occurrence_matrix=co_occurrence_matrix, epochs=20)
-    # Gradient descent 
-    
-    # model.fit(
-    #     sample_sentences,
-    #     co_occurrence_matrix=co_occurrence_matrix,
-    #     learning_rate=5e-4,
-    #     regularization=0.1,
-    #     epochs=500,
-    #     gd=True,
-    # )
-    model.save(als_file)
-    
+    # Create the GloVe model
+    model = Glove(100, V, 10)
+    # Fit the model
+    model.fit(sample_sentences, 
+              co_occurrence_matrix_file=co_occurrence_matrix_file, 
+              learning_rate=5e-4, 
+              regularization=0.1, 
+              epochs=20, 
+              gradient_descent=True)
+    # Save the model
+    model.save(embedding_file)
+
+
+# LEFT OFF HERE
+# LEFT OFF HERE
+# LEFT OFF HERE
+# LEFT OFF HERE
 # Computes analogies between vectors
-    
 def find_analogies(w1, w2, w3, We, word2index, index2word):
     Zi, Qi = We.shape
     dad = We[word2index[w1]]
