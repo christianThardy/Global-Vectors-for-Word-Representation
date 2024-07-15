@@ -419,30 +419,47 @@ def main(we_file, w2i_file, use_bt_2000=True, num_files=100):
     model.save(embedding_file)
 
 
-# LEFT OFF HERE
-# LEFT OFF HERE
-# LEFT OFF HERE
-# LEFT OFF HERE
 # Computes analogies between vectors
-def find_analogies(w1, w2, w3, We, word2index, index2word):
-    Zi, Qi = We.shape
-    dad = We[word2index[w1]]
-    guy = We[word2index[w2]]
-    mom = We[word2index[w3]]
-    v0 = dad - guy + mom
-    for dist in ('euclidean', 'cosine'):
-        distances = pairwise_distances(v0.reshape(1, Qi), We, metric=dist).reshape(Zi)
-        index = [x for x,y in sorted(enumerate(distances), key = lambda x: x[4])]
+def find_analogies(word1, word2, word3, embeddings, word2index, index2word):
+    # Get dimensions of the embeddings
+    embedding_dim, vocab_size = embeddings.shape
+    # Get embedding for word 1
+    vector1 = embeddings[word2index[word1]]
+    # Get embedding for word 2
+    vector2 = embeddings[word2index[word2]]
+    # Get embedding for word 3
+    vector3 = embeddings[word2index[word3]]
+    # Compute the target vector
+    target_vector = vector1 - vector2 + vector3
+    # Iterate over distance metrics
+    for distance_metrix in ('euclidean', 'cosine'):
+        # Compute pairwise distances
+        distances = pairwise_distances(target_vector.reshape(1, vocab_size), embeddings, metric=distance_metric).reshape(embedding_dim)
+        # Sort the distances
+        sorted_indices = [x for x, y in sorted(enumerate(distances), key = lambda x: x[1])]
+        # Initialize the best index
         best_index = -1
-        keep_out = [word2index[w] for w in (w1, w2, w3)]
-        for i in index:
+        # Set of words to keep out
+        keep_out = [word2index[word] for word in (word1, word2, word3)]
+        # Iterate over sorted indices
+        for i in sorted_indices:
+            # Check if the index is not in the keep-out set
             if i not in keep_out:
+                # Set the best index
                 best_index = i
                 break
+        # Get the analogous word
         analogous_word = index2word[best_index]
-        print('closest match by', dist, 'distance:', analogous_word)
-        print(w1, "-", w2, "=", analogous_word, "-", w3)
-    
+        # Print the closest match
+        print(f'closest match by {distance_metric} distance: {analogous_word})
+        # Print the analogy
+        print(f'{word1} - {word2} = {analogous_word} - {word3'})
+
+
+# LEFT OFF HERE
+# LEFT OFF HERE
+# LEFT OFF HERE
+# LEFT OFF HERE
 # Loads embedding analogies 
 if __name__ == '__main__':
     we = 'glove_model.npz'
