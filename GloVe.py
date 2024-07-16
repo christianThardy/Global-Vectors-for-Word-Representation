@@ -453,34 +453,44 @@ def find_analogies(word1, word2, word3, embeddings, word2index, index2word):
         print(f'{word1} - {word2} = {analogous_word} - {word3'})
 
 
-# LEFT OFF HERE
-# LEFT OFF HERE
-# LEFT OFF HERE
-# LEFT OFF HERE
-# Loads embedding analogies 
+# Load embedding analogies 
 if __name__ == '__main__':
-    we = 'glove_model.npz'
-    w2i = 'glove_word2index.json'
-    main(we, w2i, use_bt_2000=False)
-    
-    glove_model = np.load(we)
-    word_one = glove_model['arr_0']
-    word_two = glove_model['arr_1']
-    with open(w2i) as f:
+    # Embedding file
+    embedding_file = 'glove_model.npz'
+    # Word2index file
+    word2index_file = 'glove_word2index.json'
+    # Call main function
+    main(embedding_file, word2index_file, use_bt_2000=False)
+
+    # Load GloVe model
+    glove_model = np.load(embedding_file)
+    # Get word embeddings
+    word_embeddings = glove_model['arr_0']
+    # Get context embeddings
+    context_embeddings = glove_model['arr_1']
+    # Open word2index file
+    with open(word2index_file) as f:
         word2index = json.load(f)
-        index2word = {i:w for w,i in word2index.items()}
-        
-    for append in (True, False):
-        print('** concat:', append)
-        if append:
-            We = np.hstack([word_one, word_two.T])
+        # Create index2word
+        index2word = {i:word for word,i in word2index.items()}
+
+    # Iterate over concatenate options
+    for concatenate in (True, False):
+        Print concatenate option
+        print('** concatenate:', concatenate)
+        # Check if concatenate is True
+        if concatenate:
+            # Concatenate embeddings
+            embeddings = np.hstack([word_embeddings, context_embeddings.T])
         else:
-            We = (word_one + word_two.T) / 2
-            
-        find_analogies('king', 'man', 'woman', We, word2index, index2word)
-        find_analogies('frank', 'ocean', 'africa', We, word2index, index2word)
-        find_analogies('horrible', 'painful', 'miserable', We, word2index, index2word)
-        find_analogies('sad', 'jealous', 'bored', We, word2index, index2word)
-        find_analogies('may', 'might', 'should', We, word2index, index2word)
-        find_analogies('dad', 'guy', 'mom', We, word2index, index2word)
-        find_analogies('face', 'head', 'body', We, word2index, index2word)
+            # Average embeddings
+            embeddings = (word_embeddings + context_embeddings.T) / 2
+
+        # Find analogies
+        find_analogies('king', 'man', 'woman', embeddings, word2index, index2word)
+        find_analogies('frank', 'ocean', 'africa', embeddings, word2index, index2word)
+        find_analogies('horrible', 'painful', 'miserable', embeddings, word2index, index2word)
+        find_analogies('sad', 'jealous', 'bored', embeddings, word2index, index2word)
+        find_analogies('may', 'might', 'should', embeddings, word2index, index2word)
+        find_analogies('dad', 'guy', 'mom', embeddings, word2index, index2word)
+        find_analogies('face', 'head', 'body', embeddings, word2index, index2word)
