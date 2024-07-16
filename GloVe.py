@@ -273,7 +273,6 @@ def get_bt_2000_data(num_files, num_vocab, by_paragraph=False):
         print('Quitting...')
         exit()  
 
-    
     # List to store sample sentences
     sample_sentences = []
     # Dictionary to map words to indices
@@ -340,13 +339,11 @@ def main(we_file, w2i_file, use_bt_2000=True, num_files=100):
             'italy', 'rome', 'france', 'paris',
             'london', 'britain', 'england'
         }
-
         
         def get_sentences_word2index():
             # Get sample sentences and word2index
             sample_sentences, word2index = get_bt_2000_data(num_files, num_vocab=2000)
             return tokenized_sample_sentences, word2index
-                    
                     
         '''Checks if we need to re-load the raw data
             needed to train the co-oc matrix. Function 
