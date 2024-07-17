@@ -1,5 +1,3 @@
-# GloVe word embeddings from scratch
-
 '''Reference:
     Jeffrey Pennington, Richard Socher, and Christopher D. Manning. 2014.
     https://nlp.stanford.edu/pubs/glove.pdf'''
@@ -373,7 +371,6 @@ def main(we_file, w2i_file, use_bt_2000=True, num_files=100):
                 tokenized_sample_sentences.append(tokenization)
             return tokenized_sample_sentences, word2index
             
-
     # Check if the co-occurrence matrix file exists
     if os.path.exists(co_occurrence_matrix_file):
         with open(word2index_file) as f:
